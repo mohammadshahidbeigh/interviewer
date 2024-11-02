@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import {FaMicrophone} from "react-icons/fa";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -14,12 +16,31 @@ export default function Home() {
         </p>
       </div>
 
-      <Link
-        href="/interview"
-        className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-      >
-        Start Interview
-      </Link>
+      <div className="relative w-32 h-32 mb-4">
+        <Image
+          src="/vercel.svg"
+          alt="AI Interviewer Avatar"
+          fill
+          className="rounded-full animate-pulse"
+        />
+      </div>
+
+      <div className="flex flex-col items-center gap-4">
+        <div className="flex items-center gap-3 text-gray-600 dark:text-gray-300">
+          <FaMicrophone className="text-2xl" />
+          <p className="text-lg">
+            Click Start and speak naturally - I&apos;ll listen and respond
+          </p>
+        </div>
+
+        <Link
+          href="/interview"
+          className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          Start Interview
+          <FaMicrophone className="text-lg" />
+        </Link>
+      </div>
     </div>
   );
 }
