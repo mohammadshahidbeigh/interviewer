@@ -23,6 +23,8 @@ export default function InterviewPage() {
     resumeInterview,
     endInterview,
     setCurrentQuestion,
+    questionCount,
+    isCompleted,
   } = useInterview();
 
   const {handleStopAnswer, isProcessing} = useInterviewFlow();
@@ -70,24 +72,50 @@ export default function InterviewPage() {
         </div>
       ) : (
         <>
+          {!isCompleted && (
+            <div className="text-right mb-4">
+              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                Question {questionCount}/3
+              </span>
+            </div>
+          )}
+
           <QuestionDisplay question={currentQuestion} />
 
           {audioUrl && <VoiceOutput audioUrl={audioUrl} />}
 
-          <AnswerRecorder onRecordingComplete={handleStopAnswer} />
+          {!isCompleted && (
+            <AnswerRecorder onRecordingComplete={handleStopAnswer} />
+          )}
 
           {transcription && <TranscriptDisplay transcription={transcription} />}
 
-          <div className="mt-8">
-            <InterviewControls
-              onStart={startInterview}
-              onPause={pauseInterview}
-              onResume={resumeInterview}
-              onEnd={endInterview}
-              isStarted={isStarted}
-              isPaused={isPaused}
-            />
-          </div>
+          {!isCompleted && (
+            <div className="mt-8">
+              <InterviewControls
+                onStart={startInterview}
+                onPause={pauseInterview}
+                onResume={resumeInterview}
+                onEnd={endInterview}
+                isStarted={isStarted}
+                isPaused={isPaused}
+              />
+            </div>
+          )}
+
+          {isCompleted && (
+            <div className="mt-8 text-center">
+              <div className="bg-green-100 text-green-800 p-4 rounded-lg mb-4">
+                Interview completed successfully! 🎉
+              </div>
+              <button
+                onClick={endInterview}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Start New Interview
+              </button>
+            </div>
+          )}
 
           {isProcessing && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
