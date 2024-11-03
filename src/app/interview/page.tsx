@@ -24,7 +24,7 @@ export default function InterviewPage() {
   } = useInterview();
 
   const {handleStopAnswer, isProcessing, error} = useInterviewFlow();
-  const {generateVoice} = useVoiceOutput();
+  const {generateVoice, isGenerating} = useVoiceOutput();
   const [isListening, setIsListening] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
   const totalQuestions = 7;
@@ -33,22 +33,28 @@ export default function InterviewPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
+  const showNotification = (message: string) => {
+    setNotification(message);
+    const timer = setTimeout(() => {
+      setNotification(null);
+    }, 5000);
+    return () => clearTimeout(timer);
+  };
+
   // Handle errors and show notifications
   useEffect(() => {
     if (error) {
-      setNotification(error);
-      const timer = setTimeout(() => {
-        setNotification(null);
-      }, 5000); // Hide notification after 5 seconds
-      return () => clearTimeout(timer);
+      showNotification(error);
     }
   }, [error]);
 
   // Play initial question when interview starts
   useEffect(() => {
     if (isStarted) {
+      showNotification("Generating AI voice response...");
       generateVoice(INTERVIEW_QUESTIONS.INITIAL).then((url) => {
         setAudioUrl(url);
+        showNotification("AI is now speaking...");
       });
     }
   }, [isStarted, generateVoice, setAudioUrl]);
@@ -74,13 +80,18 @@ export default function InterviewPage() {
           type: AUDIO_CONFIG.MIME_TYPE,
         });
         stream.getTracks().forEach((track) => track.stop());
+        showNotification("Processing your answer...");
         await handleStopAnswer(audioBlob);
       };
 
       mediaRecorder.start();
       setIsListening(true);
+      showNotification("Recording started - listening to your answer...");
     } catch (error) {
       console.error("Error starting recording:", error);
+      showNotification(
+        "Failed to start recording. Please check your microphone permissions."
+      );
     }
   };
 
@@ -88,6 +99,7 @@ export default function InterviewPage() {
     if (mediaRecorderRef.current && isListening) {
       mediaRecorderRef.current.stop();
       setIsListening(false);
+      showNotification("Recording stopped");
     }
   };
 
@@ -97,6 +109,21 @@ export default function InterviewPage() {
     } else {
       startRecording();
     }
+  };
+
+  const handlePauseInterview = () => {
+    pauseInterview();
+    showNotification("Interview paused");
+  };
+
+  const handleResumeInterview = () => {
+    resumeInterview();
+    showNotification("Interview resumed");
+  };
+
+  const handleEndInterview = () => {
+    endInterview();
+    showNotification("Interview ended");
   };
 
   // Cleanup on unmount
@@ -113,11 +140,11 @@ export default function InterviewPage() {
       {/* Notification */}
       {notification && (
         <div className="fixed top-4 right-4 max-w-md z-50 animate-fade-in">
-          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg">
+          <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded shadow-lg">
             <div className="flex items-center">
               <div className="py-1">
                 <svg
-                  className="h-6 w-6 text-red-500 mr-4"
+                  className="h-6 w-6 text-blue-500 mr-4"
                   fill="none"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -125,7 +152,7 @@ export default function InterviewPage() {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
               </div>
               <div>{notification}</div>
@@ -231,7 +258,9 @@ export default function InterviewPage() {
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold text-gray-200">Interview in Progress</h2>
+              <h2 className="text-2xl font-semibold text-gray-200">
+                Interview in Progress
+              </h2>
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 bg-blue-900/50 text-blue-200 rounded-full font-medium">
                   Question {questionCount} of {totalQuestions}
@@ -249,6 +278,14 @@ export default function InterviewPage() {
           </div>
 
           {/* Voice Output */}
+          {isGenerating && (
+            <div className="flex items-center justify-center mb-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              <span className="ml-3 text-blue-400">
+                Generating AI response...
+              </span>
+            </div>
+          )}
           {audioUrl && <VoiceOutput audioUrl={audioUrl} />}
 
           {/* Voice Recording Controls */}
@@ -285,21 +322,21 @@ export default function InterviewPage() {
             <div className="flex gap-4 mt-4">
               {isPaused ? (
                 <button
-                  onClick={resumeInterview}
+                  onClick={handleResumeInterview}
                   className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                   Resume Interview
                 </button>
               ) : (
                 <button
-                  onClick={pauseInterview}
+                  onClick={handlePauseInterview}
                   className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
                 >
                   Pause Interview
                 </button>
               )}
               <button
-                onClick={endInterview}
+                onClick={handleEndInterview}
                 className="px-6 py-2 text-red-400 border border-red-600 rounded-lg hover:bg-red-900/20 transition-colors"
               >
                 End Interview
@@ -314,7 +351,7 @@ export default function InterviewPage() {
               </h3>
               <div className="flex gap-4 justify-center">
                 <button
-                  onClick={endInterview}
+                  onClick={handleEndInterview}
                   className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                   Start New Interview
