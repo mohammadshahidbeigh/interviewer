@@ -20,7 +20,7 @@ const InterviewControls: FC<InterviewControlsProps> = ({
   isPaused,
 }) => {
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-4 justify-center">
       {!isStarted ? (
         <button
           onClick={onStart}

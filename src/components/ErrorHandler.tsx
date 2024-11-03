@@ -8,17 +8,8 @@ interface ErrorHandlerProps {
 
 export const ErrorHandler: React.FC<ErrorHandlerProps> = ({message}) => {
   return (
-    <div
-      style={{
-        padding: "1rem",
-        margin: "1rem 0",
-        backgroundColor: "#fee2e2",
-        border: "1px solid #ef4444",
-        borderRadius: "0.375rem",
-        color: "#991b1b",
-      }}
-    >
-      <p style={{margin: 0}}>{message}</p>
+    <div className="bg-red-100 border border-red-400 text-red-900 px-4 py-3 rounded relative mb-4">
+      <span className="block sm:inline">{message}</span>
     </div>
   );
 };

@@ -1,31 +1,37 @@
-import axios from "axios";
+import {ERROR_MESSAGES} from "./constants";
 
 interface GenerateQuestionsResponse {
-  questions: string[];
+  response: string;
 }
 
-const ML_PROMPT = `Generate 5 technical interview questions about machine learning. The questions should:
-- Cover different ML concepts (algorithms, evaluation metrics, deep learning, etc.)
+const ML_PROMPT = `Generate a technical interview question about machine learning. The question should:
+- Cover core ML concepts (algorithms, evaluation metrics, deep learning, etc.)
 - Be suitable for a mid-level ML engineer interview
 - Be open-ended to encourage discussion
 - Not require coding implementations
-Return only the questions, one per line.`;
+Return only the question text.`;
 
-export async function generateMLQuestions(
-  numQuestions: number = 5
-): Promise<string[]> {
+export async function generateMLQuestions(): Promise<string> {
   try {
-    const response = await axios.post<GenerateQuestionsResponse>(
-      "/api/generate-questions",
-      {
-        prompt: ML_PROMPT,
-        numQuestions,
-      }
-    );
+    const response = await fetch("/api/llmGenerate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        currentQuestion: "",
+        answer: ML_PROMPT,
+      }),
+    });
 
-    return response.data.questions;
+    if (!response.ok) {
+      throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
+    }
+
+    const data: GenerateQuestionsResponse = await response.json();
+    return data.response;
   } catch (error) {
-    console.error("Failed to generate ML questions:", error);
-    throw new Error("Failed to generate interview questions");
+    console.error("Failed to generate ML question:", error);
+    throw new Error("Failed to generate interview question");
   }
 }

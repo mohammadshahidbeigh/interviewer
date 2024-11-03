@@ -2,12 +2,12 @@
 
 import {useState, useCallback} from "react";
 import {useInterview} from "../context/InterviewContext";
-import {useAudioRecorder} from "./useRecorder";
+import {apiClient} from "../utils/apiClient";
 
 interface UseInterviewFlowReturn {
-  handleStartAnswer: () => Promise<void>;
-  handleStopAnswer: () => Promise<void>;
+  handleStopAnswer: (audioBlob: Blob) => Promise<void>;
   isProcessing: boolean;
+  error: string | null;
 }
 
 export const useInterviewFlow = (): UseInterviewFlowReturn => {
@@ -15,112 +15,88 @@ export const useInterviewFlow = (): UseInterviewFlowReturn => {
     setCurrentQuestion,
     setTranscription,
     setAudioUrl,
-    setIsRecording,
     currentQuestion,
+    questionCount,
+    incrementQuestionCount,
+    setIsCompleted,
   } = useInterview();
-  const {startRecording, stopRecording, audioBlob} = useAudioRecorder();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const getNextQuestion = useCallback(
-    async (transcription: string) => {
+  const QUESTION_LIMIT = 3;
+
+  const handleStopAnswer = useCallback(
+    async (audioBlob: Blob) => {
+      setIsProcessing(true);
+      setError(null);
       try {
-        const response = await fetch("/api/next-question", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            currentQuestion,
-            answer: transcription,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to get next question");
-        }
-
-        const data = await response.json();
-        return data.question;
-      } catch (error) {
-        console.error("Error getting next question:", error);
-        return null;
-      }
-    },
-    [currentQuestion]
-  );
-
-  const handleStartAnswer = useCallback(async () => {
-    setIsRecording(true);
-    await startRecording();
-  }, [setIsRecording, startRecording]);
-
-  const handleStopAnswer = useCallback(async () => {
-    setIsProcessing(true);
-    stopRecording();
-    setIsRecording(false);
-
-    if (audioBlob) {
-      try {
-        // Create form data with audio blob
-        const formData = new FormData();
-        formData.append("audio", audioBlob);
-
         // Send audio for transcription
-        const transcriptionResponse = await fetch("/api/transcribe", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!transcriptionResponse.ok) {
-          throw new Error("Transcription failed");
-        }
-
-        const {transcription} = await transcriptionResponse.json();
+        const transcription = await apiClient.transcribeAudio(audioBlob);
         setTranscription(transcription);
+        console.log(
+          `Question ${questionCount}/${QUESTION_LIMIT}:`,
+          currentQuestion
+        );
+        console.log("Your answer:", transcription);
+
+        if (questionCount >= QUESTION_LIMIT) {
+          // Interview is complete
+          const completionMessage =
+            "Interview completed successfully! Thank you for your participation. You have completed all questions.";
+          setCurrentQuestion(completionMessage);
+          setIsCompleted(true);
+          console.log("Interview completed successfully! ✨");
+
+          // Generate voice for completion message
+          const voiceBlob = await apiClient.generateVoice(completionMessage);
+          const voiceUrl = URL.createObjectURL(voiceBlob);
+          setAudioUrl(voiceUrl);
+          return;
+        }
 
         // Get next question based on transcription
-        const nextQuestion = await getNextQuestion(transcription);
-        if (nextQuestion) {
-          setCurrentQuestion(nextQuestion);
-        }
+        console.log("Processing your answer...");
+        const nextQuestion = await apiClient.getNextQuestion(
+          currentQuestion,
+          transcription
+        );
+        console.log("AI's response:", nextQuestion);
+        setCurrentQuestion(nextQuestion);
+        incrementQuestionCount();
 
-        // Generate AI voice response
-        const voiceResponse = await fetch("/api/generate-voice", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            text: nextQuestion,
-          }),
-        });
-
-        if (!voiceResponse.ok) {
-          throw new Error("Voice generation failed");
-        }
-
-        const voiceBlob = await voiceResponse.blob();
+        // Generate voice response
+        console.log("Generating voice response...");
+        const voiceBlob = await apiClient.generateVoice(nextQuestion);
         const voiceUrl = URL.createObjectURL(voiceBlob);
         setAudioUrl(voiceUrl);
+
+        console.log(
+          `Question ${questionCount}/${QUESTION_LIMIT} completed! ✨`
+        );
       } catch (error) {
-        console.error("Error processing answer:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "An unknown error occurred";
+        console.error("Error in interview flow:", errorMessage);
+        setError(errorMessage);
+        throw error;
       } finally {
         setIsProcessing(false);
       }
-    }
-  }, [
-    audioBlob,
-    getNextQuestion,
-    setAudioUrl,
-    setCurrentQuestion,
-    setIsRecording,
-    setTranscription,
-    stopRecording,
-  ]);
+    },
+    [
+      currentQuestion,
+      questionCount,
+      setAudioUrl,
+      setCurrentQuestion,
+      setTranscription,
+      incrementQuestionCount,
+      setIsCompleted,
+    ]
+  );
 
   return {
-    handleStartAnswer,
     handleStopAnswer,
     isProcessing,
+    error,
   };
 };

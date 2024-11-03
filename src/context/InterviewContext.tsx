@@ -8,6 +8,7 @@ import {
   ReactNode,
   FC,
 } from "react";
+import {INTERVIEW_QUESTIONS} from "@/utils/constants";
 
 interface InterviewContextType {
   currentQuestion: string;
@@ -16,6 +17,8 @@ interface InterviewContextType {
   isPaused: boolean;
   isRecording: boolean;
   audioUrl: string | null;
+  questionCount: number;
+  isCompleted: boolean;
   startInterview: () => void;
   pauseInterview: () => void;
   resumeInterview: () => void;
@@ -24,6 +27,8 @@ interface InterviewContextType {
   setTranscription: (text: string) => void;
   setIsRecording: (isRecording: boolean) => void;
   setAudioUrl: (url: string | null) => void;
+  incrementQuestionCount: () => void;
+  setIsCompleted: (completed: boolean) => void;
 }
 
 const InterviewContext = createContext<InterviewContextType | undefined>(
@@ -35,20 +40,32 @@ interface InterviewProviderProps {
 }
 
 export const InterviewProvider: FC<InterviewProviderProps> = ({children}) => {
-  const [currentQuestion, setCurrentQuestion] = useState("");
-  const [transcription, setTranscription] = useState("");
+  const [currentQuestion, setCurrentQuestion] = useState<string>(
+    INTERVIEW_QUESTIONS.INITIAL
+  );
+  const [transcription, setTranscription] = useState<string>("");
   const [isStarted, setIsStarted] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [questionCount, setQuestionCount] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   const startInterview = useCallback(() => {
     setIsStarted(true);
     setIsPaused(false);
+    setCurrentQuestion(INTERVIEW_QUESTIONS.INITIAL);
+    setQuestionCount(1); // Start with first question
+    setIsCompleted(false);
+  }, []);
+
+  const incrementQuestionCount = useCallback(() => {
+    setQuestionCount((prev) => prev + 1);
   }, []);
 
   const pauseInterview = useCallback(() => {
     setIsPaused(true);
+    setIsRecording(false);
   }, []);
 
   const resumeInterview = useCallback(() => {
@@ -62,6 +79,8 @@ export const InterviewProvider: FC<InterviewProviderProps> = ({children}) => {
     setCurrentQuestion("");
     setTranscription("");
     setAudioUrl(null);
+    setQuestionCount(0);
+    setIsCompleted(false);
   }, []);
 
   const value = {
@@ -71,6 +90,8 @@ export const InterviewProvider: FC<InterviewProviderProps> = ({children}) => {
     isPaused,
     isRecording,
     audioUrl,
+    questionCount,
+    isCompleted,
     startInterview,
     pauseInterview,
     resumeInterview,
@@ -79,6 +100,8 @@ export const InterviewProvider: FC<InterviewProviderProps> = ({children}) => {
     setTranscription,
     setIsRecording,
     setAudioUrl,
+    incrementQuestionCount,
+    setIsCompleted,
   };
 
   return (

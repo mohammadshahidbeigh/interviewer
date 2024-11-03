@@ -1,13 +1,14 @@
 "use client";
 
 import axios from "axios";
+import {TIMEOUTS} from "./constants";
 
 interface TranscriptionResponse {
   transcription: string;
 }
 
 interface NextQuestionResponse {
-  question: string;
+  response: string;
 }
 
 class ApiClient {
@@ -20,6 +21,7 @@ class ApiClient {
       headers: {
         "Content-Type": "application/json",
       },
+      timeout: TIMEOUTS.API_REQUEST_TIMEOUT,
     });
   }
 
@@ -36,12 +38,13 @@ class ApiClient {
       formData.append("audio", audioBlob);
 
       const response = await this.client.post<TranscriptionResponse>(
-        "/transcribe",
+        "/deepgramSTT",
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
+          timeout: TIMEOUTS.API_REQUEST_TIMEOUT * 2, // Double timeout for audio processing
         }
       );
 
@@ -58,14 +61,14 @@ class ApiClient {
   ): Promise<string> {
     try {
       const response = await this.client.post<NextQuestionResponse>(
-        "/next-question",
+        "/llmGenerate",
         {
           currentQuestion,
           answer,
         }
       );
 
-      return response.data.question;
+      return response.data.response;
     } catch (error) {
       console.error("Failed to get next question:", error);
       throw new Error("Failed to get next question");
@@ -75,12 +78,13 @@ class ApiClient {
   async generateVoice(text: string): Promise<Blob> {
     try {
       const response = await this.client.post(
-        "/generate-voice",
+        "/deepgramTTS",
         {
           text,
         },
         {
           responseType: "blob",
+          timeout: TIMEOUTS.API_REQUEST_TIMEOUT * 2, // Double timeout for voice generation
         }
       );
 

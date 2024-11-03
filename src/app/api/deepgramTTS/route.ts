@@ -1,64 +1,63 @@
 import {NextResponse} from "next/server";
 import {createClient} from "@deepgram/sdk";
 
-// Initialize the Deepgram client
-const deepgram = createClient(process.env.DEEPGRAM_API_KEY || "");
+const deepgram = createClient(process.env.DEEPGRAM_API_KEY!);
 
 export async function POST(request: Request) {
   try {
-    // Get the text content from the request
     const {text} = await request.json();
 
     if (!text) {
       return NextResponse.json({error: "No text provided"}, {status: 400});
     }
-    // TTS options are configured directly in the speak.request() call below
 
-    // Generate audio from text
     const response = await deepgram.speak.request(
       {text},
       {
         model: "aura-asteria-en",
-        encoding: "linear16" as const,
+        encoding: "linear16",
         container: "wav",
       }
     );
 
-    // Get the audio stream
     const stream = await response.getStream();
-
     if (!stream) {
-      throw new Error("Failed to generate audio stream");
+      throw new Error("Failed to get audio stream");
     }
+    const audioBuffer = await getAudioBuffer(stream);
 
-    // Convert the stream to an audio buffer
-    const audioData = await streamToBuffer(stream);
-
-    // Return the audio with appropriate headers
-    return new NextResponse(audioData, {
+    // Return the audio as a stream
+    return new NextResponse(audioBuffer, {
       headers: {
         "Content-Type": "audio/wav",
-        "Content-Length": audioData.length.toString(),
+        "Content-Length": audioBuffer.length.toString(),
       },
     });
   } catch (error) {
-    console.error("Deepgram TTS Error:", error);
+    console.error("Text-to-speech error:", error);
     return NextResponse.json(
       {error: "Failed to generate speech"},
       {status: 500}
     );
   }
 }
-// Helper function to convert the stream to a buffer
-async function streamToBuffer(stream: ReadableStream<Uint8Array>) {
-  const chunks: Uint8Array[] = [];
-  const reader = stream.getReader();
+
+// Helper function to convert the stream to an audio buffer
+const getAudioBuffer = async (response: ReadableStream<Uint8Array>) => {
+  const reader = response.getReader();
+  const chunks = [];
 
   while (true) {
     const {done, value} = await reader.read();
     if (done) break;
+
     chunks.push(value);
   }
 
-  return Buffer.concat(chunks);
-}
+  const dataArray = chunks.reduce(
+    (acc, chunk) => Uint8Array.from([...acc, ...chunk]),
+    new Uint8Array(0)
+  );
+
+  return Buffer.from(dataArray.buffer);
+};

@@ -1,38 +1,29 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@deepgram/sdk';
+import {NextResponse} from "next/server";
+import {createClient} from "@deepgram/sdk";
 
-// Initialize the Deepgram client
-const deepgram = createClient(process.env.DEEPGRAM_API_KEY || '');
+const deepgram = createClient(process.env.DEEPGRAM_API_KEY!);
 
 export async function POST(request: Request) {
   try {
-    // Get the audio file from the request
     const formData = await request.formData();
-    const audioFile = formData.get('audio') as File;
+    const audioFile = formData.get("audio") as File;
 
     if (!audioFile) {
       return NextResponse.json(
-        { error: 'No audio file provided' },
-        { status: 400 }
+        {error: "No audio file provided"},
+        {status: 400}
       );
     }
 
-    // Convert the file to an ArrayBuffer
-    const arrayBuffer = await audioFile.arrayBuffer();
+    const audioBuffer = Buffer.from(await audioFile.arrayBuffer());
 
-    // Configure transcription options
-    const options = {
-      smart_format: true,
-      model: 'nova-2',
-      language: 'en-US',
-    };
-
-    // Send to Deepgram for transcription
-    const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
-      Buffer.from(arrayBuffer),
+    const {result, error} = await deepgram.listen.prerecorded.transcribeFile(
+      audioBuffer,
       {
-        mimetype: audioFile.type,
-        ...options
+        smart_format: true,
+        model: "nova-2",
+        language: "en",
+        mimetype: "audio/webm",
       }
     );
 
@@ -40,16 +31,15 @@ export async function POST(request: Request) {
       throw error;
     }
 
-    // Return the transcription results
-    return NextResponse.json({
-      transcription: result.results?.channels[0]?.alternatives[0]?.transcript || '',
-      confidence: result.results?.channels[0]?.alternatives[0]?.confidence || 0,
-    });
+    const transcription =
+      result.results?.channels[0]?.alternatives[0]?.transcript || "";
+
+    return NextResponse.json({transcription}, {status: 200});
   } catch (error) {
-    console.error('Deepgram STT Error:', error);
+    console.error("Speech-to-text error:", error);
     return NextResponse.json(
-      { error: 'Failed to process audio' },
-      { status: 500 }
+      {error: "Failed to transcribe audio"},
+      {status: 500}
     );
   }
 }
