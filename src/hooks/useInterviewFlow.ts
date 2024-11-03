@@ -24,7 +24,7 @@ export const useInterviewFlow = (): UseInterviewFlowReturn => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const QUESTION_LIMIT = 3;
+  const QUESTION_LIMIT = 7;
   const MIN_ANSWER_LENGTH = 20; // Minimum characters for a valid answer
 
   const handleStopAnswer = useCallback(

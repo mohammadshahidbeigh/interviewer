@@ -1,6 +1,7 @@
 "use client";
 
 import {FC, useEffect, useRef, useState} from "react";
+import {FaPlay, FaPause} from "react-icons/fa";
 
 interface VoiceOutputProps {
   audioUrl: string;
@@ -10,13 +11,13 @@ const VoiceOutput: FC<VoiceOutputProps> = ({audioUrl}) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     if (audioRef.current) {
       setIsLoading(true);
       setError(null);
 
-      // Wait for audio to be loaded before attempting to play
       const handleCanPlay = () => {
         setIsLoading(false);
         audioRef.current?.play().catch((error) => {
@@ -31,41 +32,107 @@ const VoiceOutput: FC<VoiceOutputProps> = ({audioUrl}) => {
         setIsLoading(false);
       };
 
+      const handlePlay = () => setIsPlaying(true);
+      const handlePause = () => setIsPlaying(false);
+      const handleEnded = () => setIsPlaying(false);
+
       audioRef.current.addEventListener("canplay", handleCanPlay);
       audioRef.current.addEventListener("error", handleError);
+      audioRef.current.addEventListener("play", handlePlay);
+      audioRef.current.addEventListener("pause", handlePause);
+      audioRef.current.addEventListener("ended", handleEnded);
 
-      // Load the new audio URL
       audioRef.current.load();
 
       return () => {
         if (audioRef.current) {
           audioRef.current.removeEventListener("canplay", handleCanPlay);
           audioRef.current.removeEventListener("error", handleError);
+          audioRef.current.removeEventListener("play", handlePlay);
+          audioRef.current.removeEventListener("pause", handlePause);
+          audioRef.current.removeEventListener("ended", handleEnded);
         }
       };
     }
   }, [audioUrl]);
 
+  const togglePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+    }
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
-      <h3 className="text-xl font-semibold mb-4">AI Response</h3>
-      {isLoading && (
-        <div className="text-gray-600 dark:text-gray-400 mb-2">
-          Loading audio response...
+    <div className="p-6 mb-6">
+      <div className="flex items-center justify-center mb-4 relative">
+        {/* AI Avatar Circle */}
+        <div
+          className={`w-28 h-28 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center cursor-pointer relative ${
+            isPlaying ? "animate-pulse" : ""
+          }`}
+          onClick={togglePlayPause}
+        >
+          {/* Ripple Effect */}
+          {isPlaying && (
+            <>
+              <div className="absolute inset-0 rounded-full bg-blue-500 opacity-25">
+                <div className="w-full h-full animate-ping" />
+              </div>
+              <div className="absolute inset-0 rounded-full bg-purple-500 opacity-25">
+                <div className="w-full h-full animate-pulse" />
+              </div>
+            </>
+          )}
+
+          {/* Play/Pause Icon */}
+          <div className="relative z-10">
+            {isPlaying ? (
+              <FaPause className="text-white w-6 h-6" />
+            ) : (
+              <FaPlay className="text-white w-6 h-6 ml-1" />
+            )}
+          </div>
         </div>
-      )}
-      {error && (
-        <div className="text-red-600 dark:text-red-400 mb-2">{error}</div>
-      )}
-      <audio
-        ref={audioRef}
-        controls
-        src={audioUrl}
-        className="w-full"
-        preload="auto"
-      >
-        Your browser does not support the audio element.
-      </audio>
+
+        {/* Audio Waves */}
+        {isPlaying && (
+          <div className="absolute left-1/2 transform -translate-x-1/2 bottom-0 flex justify-center gap-1 h-4">
+            {[...Array(7)].map((_, i) => (
+              <div
+                key={i}
+                className="w-1 rounded-full bg-gradient-to-t from-blue-500 via-purple-500 to-pink-500"
+                style={{
+                  animationName: "bounce",
+                  animationDuration: `${0.5 + Math.random() * 0.5}s`,
+                  animationTimingFunction: "ease",
+                  animationIterationCount: "infinite",
+                  animationDelay: `${i * 0.1}s`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Status Messages */}
+      <div className="text-center">
+        {isLoading && (
+          <div className="text-gray-600 dark:text-gray-400 animate-pulse">
+            Loading AI response...
+          </div>
+        )}
+        {error && <div className="text-red-600 dark:text-red-400">{error}</div>}
+        {isPlaying && (
+          <div className="text-blue-600 dark:text-blue-400 animate-pulse"></div>
+        )}
+      </div>
+
+      {/* Hidden Audio Element */}
+      <audio ref={audioRef} src={audioUrl} className="hidden" preload="auto" />
     </div>
   );
 };
