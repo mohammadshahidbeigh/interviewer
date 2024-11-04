@@ -28,15 +28,9 @@ An interactive web application that simulates job interviews using AI-powered vo
    npm run dev
    ```
 
-# or
+yarn dev/
 
-yarn dev
-
-# or
-
-pnpm dev
-
-# or
+pnpm dev/
 
 bun dev
 
