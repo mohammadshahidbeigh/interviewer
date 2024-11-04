@@ -14,13 +14,14 @@ const VoiceOutput: FC<VoiceOutputProps> = ({audioUrl}) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
-    if (audioRef.current) {
+    const audio = audioRef.current;
+    if (audio) {
       setIsLoading(true);
       setError(null);
 
       const handleCanPlay = () => {
         setIsLoading(false);
-        audioRef.current?.play().catch((error) => {
+        audio.play().catch((error) => {
           console.error("Error playing audio:", error);
           setError("Failed to play audio response");
         });
@@ -36,22 +37,20 @@ const VoiceOutput: FC<VoiceOutputProps> = ({audioUrl}) => {
       const handlePause = () => setIsPlaying(false);
       const handleEnded = () => setIsPlaying(false);
 
-      audioRef.current.addEventListener("canplay", handleCanPlay);
-      audioRef.current.addEventListener("error", handleError);
-      audioRef.current.addEventListener("play", handlePlay);
-      audioRef.current.addEventListener("pause", handlePause);
-      audioRef.current.addEventListener("ended", handleEnded);
+      audio.addEventListener("canplay", handleCanPlay);
+      audio.addEventListener("error", handleError);
+      audio.addEventListener("play", handlePlay);
+      audio.addEventListener("pause", handlePause);
+      audio.addEventListener("ended", handleEnded);
 
-      audioRef.current.load();
+      audio.load();
 
       return () => {
-        if (audioRef.current) {
-          audioRef.current.removeEventListener("canplay", handleCanPlay);
-          audioRef.current.removeEventListener("error", handleError);
-          audioRef.current.removeEventListener("play", handlePlay);
-          audioRef.current.removeEventListener("pause", handlePause);
-          audioRef.current.removeEventListener("ended", handleEnded);
-        }
+        audio.removeEventListener("canplay", handleCanPlay);
+        audio.removeEventListener("error", handleError);
+        audio.removeEventListener("play", handlePlay);
+        audio.removeEventListener("pause", handlePause);
+        audio.removeEventListener("ended", handleEnded);
       };
     }
   }, [audioUrl]);
