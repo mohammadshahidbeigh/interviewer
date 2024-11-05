@@ -14,7 +14,7 @@ An interactive web application that simulates job interviews using AI-powered vo
 
 ## Tech Stack
 
-- **Framework**: Next.js 15
+- **Framework**: Next.js 14
 - **Frontend**: React, TailwindCSS
 - **AI Services**:
   - OpenAI GPT-3.5 for interview logic
