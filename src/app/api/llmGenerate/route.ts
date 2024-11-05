@@ -1,5 +1,6 @@
 import {NextResponse} from "next/server";
 import OpenAI from "openai";
+import rateLimiter from "@/utils/rateLimiter";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -34,6 +35,13 @@ Format your response as a direct follow-up question or a brief acknowledgment fo
 Ensure each response advances the interview towards covering all core ML concepts.`;
 
 export async function POST(request: Request) {
+  const clientId = request.headers.get("x-forwarded-for") || "anonymous";
+
+  const rateLimitResult = rateLimiter.consume(clientId);
+  if (!rateLimitResult.success) {
+    return NextResponse.json({error: rateLimitResult.message}, {status: 429});
+  }
+
   try {
     const {currentQuestion, answer} = await request.json();
 

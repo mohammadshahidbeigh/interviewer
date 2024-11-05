@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import {TIMEOUTS} from "./constants";
+import type {AxiosPromise} from "axios";
 
 interface TranscriptionResponse {
   transcription: string;
@@ -32,26 +33,37 @@ class ApiClient {
     return ApiClient.instance;
   }
 
+  private async handleResponse<T>(promise: AxiosPromise<T>): Promise<T> {
+    try {
+      const response = await promise;
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 429) {
+        throw new Error(
+          error.response.data.error ||
+            "Rate limit exceeded. Please try again later."
+        );
+      }
+      throw error;
+    }
+  }
+
   async transcribeAudio(audioBlob: Blob): Promise<string> {
     try {
       const formData = new FormData();
       formData.append("audio", audioBlob);
 
-      const response = await this.client.post<TranscriptionResponse>(
-        "/deepgramSTT",
-        formData,
-        {
+      return this.handleResponse<TranscriptionResponse>(
+        this.client.post("/deepgramSTT", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-          timeout: TIMEOUTS.API_REQUEST_TIMEOUT * 2, // Double timeout for audio processing
-        }
-      );
-
-      return response.data.transcription;
+          timeout: TIMEOUTS.API_REQUEST_TIMEOUT * 2,
+        })
+      ).then((response) => response.transcription);
     } catch (error) {
       console.error("Transcription failed:", error);
-      throw new Error("Failed to transcribe audio");
+      throw error;
     }
   }
 

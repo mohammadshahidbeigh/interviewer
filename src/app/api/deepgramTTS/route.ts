@@ -1,9 +1,17 @@
 import {NextResponse} from "next/server";
 import {createClient} from "@deepgram/sdk";
+import rateLimiter from "@/utils/rateLimiter";
 
 const deepgram = createClient(process.env.DEEPGRAM_API_KEY!);
 
 export async function POST(request: Request) {
+  const clientId = request.headers.get("x-forwarded-for") || "anonymous";
+
+  const rateLimitResult = rateLimiter.consume(clientId);
+  if (!rateLimitResult.success) {
+    return NextResponse.json({error: rateLimitResult.message}, {status: 429});
+  }
+
   try {
     const {text} = await request.json();
 
