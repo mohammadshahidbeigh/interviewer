@@ -15,7 +15,7 @@ An interactive web application that simulates job interviews using AI-powered vo
 
 - **Framework**: Next.js 15
 - **Frontend**: React, TailwindCSS
-- **Voice Processing**: Web Speech API
+- **Audio Playback**: HTML5 Audio API
 - **State Management**: React Context
 - **Styling**: TailwindCSS with custom animations
 
