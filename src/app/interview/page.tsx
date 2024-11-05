@@ -114,7 +114,7 @@ export default function InterviewPage() {
   const handlePauseInterview = () => {
     pauseInterview();
     // Pause any playing audio
-    const audioElements = document.getElementsByTagName('audio');
+    const audioElements = document.getElementsByTagName("audio");
     for (const audio of audioElements) {
       audio.pause();
     }
@@ -124,7 +124,7 @@ export default function InterviewPage() {
   const handleResumeInterview = () => {
     resumeInterview();
     // Resume the last playing audio
-    const audioElements = document.getElementsByTagName('audio');
+    const audioElements = document.getElementsByTagName("audio");
     for (const audio of audioElements) {
       audio.play();
     }
@@ -146,7 +146,7 @@ export default function InterviewPage() {
   }, []);
 
   return (
-    <div className="min-h-[calc(100vh-73px)] p-8 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+    <div className="min-h-[calc(100vh-73px)] p-8 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white mb-12">
       <ErrorHandler message={notification} type="info" />
       {isGenerating && (
         <div className="flex items-center justify-center mb-4">
@@ -154,7 +154,14 @@ export default function InterviewPage() {
           <span className="ml-3 text-blue-400">Generating AI response...</span>
         </div>
       )}
-      {audioUrl && <VoiceOutput audioUrl={audioUrl} />}
+      {/* Fixed height container for VoiceOutput */}
+      <div className="h-[280px] flex items-center justify-center">
+        {audioUrl ? (
+          <VoiceOutput audioUrl={audioUrl} />
+        ) : (
+          <div className="w-40 h-40 rounded-full bg-gray-700/50 mb-16" />
+        )}
+      </div>
       <InterviewControls
         onStart={startInterview}
         onPause={handlePauseInterview}

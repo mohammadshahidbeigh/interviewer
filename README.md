@@ -11,6 +11,55 @@ An interactive web application that simulates job interviews using AI-powered vo
 - 🔄 Real-time feedback on responses
 - 🎯 Customized follow-up questions
 - 🛡️ Rate limiting protection for API endpoints
+- ♿ Comprehensive accessibility features
+
+## Accessibility Features
+
+The platform is built with accessibility in mind, following WCAG guidelines:
+
+### Keyboard Navigation
+
+- Full keyboard support for all interactive elements
+- Visible focus indicators
+- Logical tab order through the interface
+
+### Screen Reader Support
+
+- Semantic HTML structure with ARIA landmarks
+- Descriptive ARIA labels for all interactive components
+- Live regions for dynamic content updates
+- Status announcements for:
+  - Interview progress
+  - Recording states
+  - AI response generation
+  - Error messages
+
+### Audio Interface
+
+- Play/Pause controls for AI voice responses
+- Visual indicators synchronized with audio playback
+- Clear audio status feedback
+- Alternative text for all audio controls
+
+### Visual Accessibility
+
+- High contrast color schemes
+- Clear visual hierarchy
+- Consistent layout and spacing
+- Visual indicators for:
+  - Recording status
+  - Interview progress
+  - System status
+  - Error states
+
+### State Management
+
+- Clear state indicators for:
+  - Interview progress
+  - Recording status
+  - Processing states
+  - Error conditions
+- Proper ARIA states for all interactive elements
 
 ## Tech Stack
 
