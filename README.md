@@ -17,7 +17,7 @@ An interactive web application that simulates job interviews using AI-powered vo
 - **Framework**: Next.js 14
 - **Frontend**: React, TailwindCSS
 - **AI Services**:
-  - OpenAI GPT-3.5 for interview logic
+  - OpenAI GPT-3.5 (you can change it to GPT-4) for interview logic
   - Deepgram for Speech-to-Text and Text-to-Speech
 - **State Management**: React Context
 - **API Protection**: In-memory rate limiting
